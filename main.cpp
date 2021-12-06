@@ -1,122 +1,78 @@
+
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <fstream>
 #include <string>
-#include "Image.h"
-#include "TextureManager.h"
-#include "Graph.h"
+#include "Pixel.h"
 using namespace std;
 
-void LoadImage(vector <Image>& images, string &file)
-{
-    Image::Header header;
+    int main() {
 
-    ifstream inFile;
-    inFile.open(file, ios_base::binary);
+        sf::Image startImage;
+        if (!(startImage.loadFromFile("Images/europeColored.jpeg")))
+            std::cout << "Cannot load image";   //Load Image
 
-    inFile.read(&header.idLength, sizeof(header.idLength));
-    inFile.read(&header.colorMapType, sizeof(header.colorMapType));
-    inFile.read(&header.dataTypeCode, sizeof(header.dataTypeCode));
-    inFile.read((char *) &header.colorMapOrigin, sizeof(header.colorMapOrigin));
-    inFile.read((char *) &header.colorMapLength, sizeof(header.colorMapLength));
-    inFile.read(&header.colorMapDepth, sizeof(header.colorMapDepth));
-    inFile.read((char *) &header.xOrigin, sizeof(header.xOrigin));
-    inFile.read((char *) &header.yOrigin, sizeof(header.yOrigin));
-    inFile.read((char *) &header.width, sizeof(header.width));
-    inFile.read((char *) &header.height, sizeof(header.height));
-    inFile.read(&header.bitsPerPixel, sizeof(header.bitsPerPixel));
-    inFile.read(&header.imageDescriptor, sizeof(header.imageDescriptor));
+        sf::Texture initialImage;
+        initialImage.loadFromImage(startImage);  //Load Texture from image
 
-    long count = (long) (header.width * header.height);
+        sf::Sprite initialSprite;
+        initialSprite.setTexture(initialImage);
 
-    vector <Image::Pixel> pixels_inFile;
+        sf::Image europe;
+        if (!(europe.loadFromFile("Images/europe.png")))
+            std::cout << "Cannot load image";   //Load Image
 
-    for (long i = 0; i < count; i++)
-    {
-        unsigned char blue;
-        unsigned char green;
-        unsigned char red;
+        sf::Texture texture;
+        texture.loadFromImage(europe);  //Load Texture from image
 
-        inFile.read((char *) &blue, sizeof(blue));
-        inFile.read((char *) &green, sizeof(green));
-        inFile.read((char *) &red, sizeof(red));
+        sf::Sprite sprite;
+        sprite.setTexture(texture);
 
-        Image::Pixel pixel(blue, green, red);
-        pixels_inFile.push_back(pixel);
+        sf::RenderWindow window(sf::VideoMode(sprite.getGlobalBounds().height,sprite.getGlobalBounds().width+200), "SFML Application");
 
-    }
+        sf::Texture start;
+        start.loadFromFile("Images/blueStart.jpeg");
 
-    Image newImage(header, pixels_inFile);
-    images.push_back(newImage);
-}
+        initialSprite.scale(1.4045,1.3823);
 
-void WriteOut(Image& result, string &s)
-{
+        //cout << europe.getSize().x;
+        //cout << europe.getSize().y;
 
-    // writing out the image to a file. this includes all the pixels, width, height,
-    ofstream outFile;
-    outFile.open(s, ios_base::binary);
+        sf::Sprite startButton;
+        startButton.setTexture(start);
+        startButton.scale(.25,.25);
+        auto xsize = window.getSize().x;
+        startButton.setPosition(xsize - 580, 1000);
 
-    outFile.write(&result.header.idLength, sizeof(result.header.idLength));
-    outFile.write(&result.header.colorMapType, sizeof(result.header.colorMapType));
-    outFile.write(&result.header.dataTypeCode, sizeof(result.header.dataTypeCode));
-    outFile.write((char *)&result.header.colorMapOrigin, sizeof(result.header.colorMapOrigin));
-    outFile.write((char *)&result.header.colorMapLength, sizeof(result.header.colorMapLength));
-    outFile.write(&result.header.colorMapDepth, sizeof(result.header.colorMapDepth));
-    outFile.write((char *)&result.header.xOrigin, sizeof(result.header.xOrigin));
-    outFile.write((char *)&result.header.yOrigin, sizeof(result.header.yOrigin));
-    outFile.write((char*)&result.header.width, sizeof (result.header.width));
-    outFile.write((char*)&result.header.height, sizeof (result.header.height));
-    outFile.write(&result.header.bitsPerPixel, sizeof(result.header.bitsPerPixel));
-    outFile.write(&result.header.imageDescriptor, sizeof(result.header.imageDescriptor));
-
-    // iterates through all the new pixels
-
-    long count = (long)result.header.width * result.header.height;
-
-    for ( long i = 0; i < count ; i++)
-    {
-        unsigned char res_blue = result.pixels.at(i).blue;
-        unsigned char res_green = result.pixels.at(i).green;
-        unsigned char res_red = result.pixels.at(i).red;
-
-        outFile.write((char*)&res_blue, sizeof(res_blue));
-        outFile.write((char*)&res_green, sizeof(res_green));
-        outFile.write((char*)&res_red, sizeof (res_red));
-    }
-}
-
-int main()
-{
-
-    string file_Name;
-    vector <Image> images_inFile;
-    vector <string> input = {"color map.tga"};
-    // size == 10
-
-    // ********** Begin Task 1 *********** //
-
-    LoadImage(images_inFile, input[0]);
-
-    sf::RenderWindow window(sf::VideoMode(640, 480), "SFML Application");
-    sf::CircleShape shape;
-    shape.setRadius(40.f);
-    shape.setPosition(100.f, 100.f);
-    shape.setFillColor(sf::Color::Cyan);
-
-    while (window.isOpen())
-    {
-        sf::Event event;
-
-        while (window.pollEvent(event))
+        while (window.isOpen())
         {
-            if (event.type == sf::Event::Closed)
-                window.close();
+            sf::Event event;
+
+            while (window.pollEvent(event))
+            {
+                if (event.type == sf::Event::Closed)
+                    window.close();
+
+                else if (event.type == sf::Event::MouseButtonPressed)
+                {
+                    sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
+                    auto translatedPos = window.mapPixelToCoords(mousePosition);
+                    bool isLeftClicked = sf::Mouse::isButtonPressed(sf::Mouse::Left);
+                    if (isLeftClicked && startButton.getGlobalBounds().contains(translatedPos.x, translatedPos.y))
+                    {
+                        initialSprite.setColor(sf::Color(255,255,255,0));
+                        startButton.setColor(sf::Color(255,255,255,0));
+                    }
+
+                }
+            }
+
+            window.clear(sf::Color::White);
+            window.draw(sprite);
+            window.draw(initialSprite);
+            window.draw(startButton);
+            window.display();
         }
 
-        window.clear();
-        window.draw(shape);
-        window.display();
     }
-}
